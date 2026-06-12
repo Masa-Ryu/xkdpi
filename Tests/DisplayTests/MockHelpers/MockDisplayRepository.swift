@@ -2,8 +2,8 @@ import CoreGraphics
 
 @testable import xkdpi
 
-/// テスト用モックリポジトリ
-/// スタブ値の設定、呼び出し記録、エラー注入をサポートする
+/// Mock repository for tests.
+/// Supports stub values, call recording, and error injection.
 final class MockDisplayRepository: DisplayRepository, @unchecked Sendable {
 
     // MARK: - Stubbed return values

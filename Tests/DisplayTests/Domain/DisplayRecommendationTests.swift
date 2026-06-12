@@ -68,9 +68,9 @@ struct DisplayRecommendationTests {
     }
 
     @Test func recommendedMode_27inch5K_returns2560x1440HiDPI() throws {
-        // 27インチ 5K iMac (5120×2880 native, 597mm)
-        // targetLogicalWidth = 2585 → 最近傍 2560×1440 HiDPI
-        // ← 4K と同じ物理サイズなので同じ推奨結果（解像度ではなく物理特性で決まる）
+        // 27-inch 5K iMac (5120×2880 native, 597mm).
+        // targetLogicalWidth = 2585 -> nearest 2560×1440 HiDPI.
+        // Same physical size as 4K, so the recommendation matches because it is based on physical characteristics.
         let modes5K = [
             DisplayMode(id: 10, width: 2560, height: 1440,
                         pixelWidth: 5120, pixelHeight: 2880, refreshRate: 60.0),  // exact 2x

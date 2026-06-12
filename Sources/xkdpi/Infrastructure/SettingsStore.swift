@@ -1,6 +1,6 @@
 import Foundation
 
-/// UserDefaults に永続化する設定エントリ
+/// Settings entry persisted to UserDefaults.
 public struct DisplaySetting: Codable, Equatable, Sendable {
     public let displayID: UInt32
     public let modeID: Int32
@@ -13,8 +13,8 @@ public struct DisplaySetting: Codable, Equatable, Sendable {
     }
 }
 
-/// UserDefaults を使用した設定ストア
-/// キー: "xkdpi.settings"、値: JSON エンコードされた [DisplaySetting]
+/// Settings store backed by UserDefaults.
+/// Key: "xkdpi.settings"; value: JSON-encoded [DisplaySetting].
 public final class SettingsStore: @unchecked Sendable {
 
     private let defaults: UserDefaults
@@ -26,19 +26,19 @@ public final class SettingsStore: @unchecked Sendable {
 
     // MARK: - Public API
 
-    /// 設定配列を保存する（既存を完全上書き）
+    /// Saves the settings array, replacing existing values completely.
     public func save(_ settings: [DisplaySetting]) {
         guard let data = try? makeEncoder().encode(settings) else { return }
         defaults.set(data, forKey: settingsKey)
     }
 
-    /// 設定配列を読み込む
+    /// Loads the settings array.
     public func load() -> [DisplaySetting] {
         guard let data = defaults.data(forKey: settingsKey) else { return [] }
         return (try? makeDecoder().decode([DisplaySetting].self, from: data)) ?? []
     }
 
-    /// 単一ディスプレイの設定を保存（同一 displayID があれば上書き）
+    /// Saves one display setting, replacing any existing entry with the same displayID.
     public func save(setting: DisplaySetting) {
         var all = load()
         all.removeAll { $0.displayID == setting.displayID }
@@ -46,7 +46,7 @@ public final class SettingsStore: @unchecked Sendable {
         save(all)
     }
 
-    /// 全設定を消去する
+    /// Clears all settings.
     public func clear() {
         defaults.removeObject(forKey: settingsKey)
     }

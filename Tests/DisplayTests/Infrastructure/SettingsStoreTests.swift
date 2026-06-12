@@ -5,7 +5,7 @@ import Foundation
 
 struct SettingsStoreTests {
 
-    // テストごとに独立した UserDefaults スイートを使用（並列実行対応）
+    // Use an isolated UserDefaults suite per test to support parallel execution.
     private func makeStore() -> SettingsStore {
         let suiteName = "com.xkdpi.test.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!

@@ -1,8 +1,8 @@
 import AppKit
 import xkdpi
 
-/// アプリケーションデリゲート
-/// 依存グラフの構築・ウィンドウ表示・起動時設定復元を行う
+/// Application delegate.
+/// Builds the dependency graph, presents the window, and restores settings at launch.
 @MainActor
 public final class AppDelegate: NSObject, NSApplicationDelegate {
 
@@ -11,9 +11,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private let logger = Logger(label: "AppDelegate")
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
-        logger.info("xkdpi 起動")
+        logger.info("xkdpi launched")
 
-        // 依存グラフの手動構築
+        // Build the dependency graph manually.
         let adapter = CoreGraphicsAdapter()
         let repo = MacDisplayRepository(adapter: adapter, logger: logger)
         let store = SettingsStore()
@@ -28,7 +28,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let loginItems = LoginItemService()
 
-        // ウィンドウを生成（表示はステータスバーの操作時）
+        // Create the window. It is shown from the status bar action.
         let wc = MainWindowController(
             displayManager: manager,
             modeSwitchService: switcher,
@@ -48,15 +48,15 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         )
 
-        // 起動時に保存された設定を復元
+        // Restore saved settings at launch.
         do {
             try config.restoreSettings()
         } catch {
-            logger.error("設定復元失敗: \(error)")
+            logger.error("Failed to restore settings: \(error)")
         }
     }
 
-    /// 常駐型アプリ: ウィンドウを閉じてもプロセスを継続する
+    /// Resident app: keep the process running when the window closes.
     public func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
     }

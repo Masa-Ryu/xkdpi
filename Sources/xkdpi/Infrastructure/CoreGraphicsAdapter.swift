@@ -1,15 +1,15 @@
 import CoreGraphics
 import AppKit
 
-/// CGDisplayMode を DisplayMode に変換し、CoreGraphics API をラップするアダプタ
+/// Adapter that converts CGDisplayMode to DisplayMode and wraps CoreGraphics APIs.
 public struct CoreGraphicsAdapter: Sendable {
 
     public init() {}
 
-    /// CGDisplayMode を DisplayMode に変換する
-    /// 無効なモード（id == 0）は nil を返す
+    /// Converts CGDisplayMode to DisplayMode.
+    /// Returns nil for invalid modes where id == 0.
     public func convert(_ cgMode: CGDisplayMode) -> DisplayMode? {
-        // Xcode 26+ SDK では ioDisplayModeID は Int32
+        // In the Xcode 26+ SDK, ioDisplayModeID is Int32.
         let modeID = cgMode.ioDisplayModeID
         guard modeID != 0 else { return nil }
 
@@ -23,9 +23,9 @@ public struct CoreGraphicsAdapter: Sendable {
         )
     }
 
-    /// 指定ディスプレイの利用可能な全モードを取得する
-    /// kCGDisplayShowDuplicateLowResolutionModes を指定して全バリアントを表示
-    /// ソート順: 解像度 降順 → HiDPI 優先 → リフレッシュレート 降順
+    /// Fetches all available modes for the specified display.
+    /// Uses kCGDisplayShowDuplicateLowResolutionModes to show all variants.
+    /// Sort order: resolution descending, HiDPI first, refresh rate descending.
     public func allModes(for displayID: CGDirectDisplayID) -> [DisplayMode] {
         let options: CFDictionary = [
             kCGDisplayShowDuplicateLowResolutionModes: kCFBooleanTrue as Any
@@ -42,13 +42,13 @@ public struct CoreGraphicsAdapter: Sendable {
         }
     }
 
-    /// 指定ディスプレイの現在のモードを取得する
+    /// Fetches the current mode for the specified display.
     public func currentMode(for displayID: CGDirectDisplayID) -> DisplayMode? {
         guard let cgMode = CGDisplayCopyDisplayMode(displayID) else { return nil }
         return convert(cgMode)
     }
 
-    /// CGDisplayMode を modeID で検索する
+    /// Finds a CGDisplayMode by modeID.
     public func findCGMode(displayID: CGDirectDisplayID, modeID: Int32) -> CGDisplayMode? {
         let options: CFDictionary = [
             kCGDisplayShowDuplicateLowResolutionModes: kCFBooleanTrue as Any
@@ -60,16 +60,16 @@ public struct CoreGraphicsAdapter: Sendable {
         return cgModes.first { $0.ioDisplayModeID == modeID }
     }
 
-    /// 指定ディスプレイの物理サイズをミリメートル単位で返す。
-    /// CGDisplayScreenSize が 0×0 を返した場合は nil。
+    /// Returns the physical size of the specified display in millimeters.
+    /// Returns nil when CGDisplayScreenSize returns 0×0.
     public func physicalSizeMM(for displayID: CGDirectDisplayID) -> (width: Double, height: Double)? {
         let size = CGDisplayScreenSize(displayID)
         guard size.width > 0, size.height > 0 else { return nil }
         return (width: Double(size.width), height: Double(size.height))
     }
 
-    /// NSScreen を使ってディスプレイ名を取得する
-    /// 呼び出し元はメインスレッドを保証すること
+    /// Fetches the display name using NSScreen.
+    /// The caller must guarantee main-thread execution.
     public func displayName(for displayID: CGDirectDisplayID) -> String {
         for screen in NSScreen.screens {
             if let num = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID,

@@ -8,10 +8,10 @@ DMG_NAME="${PRODUCT}.dmg"
 BUNDLE_ID="com.xkdpi.displaycontroller"
 VERSION="1.0.0"
 
-echo "=== Release ビルド ==="
+echo "=== Release build ==="
 swift build -c release
 
-echo "=== .app バンドル作成 ==="
+echo "=== Creating .app bundle ==="
 rm -rf "${APP_BUNDLE}"
 mkdir -p "${APP_BUNDLE}/Contents/MacOS"
 mkdir -p "${APP_BUNDLE}/Contents/Resources"
@@ -44,7 +44,7 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" << PLIST
 </plist>
 PLIST
 
-echo "=== DMG 作成 ==="
+echo "=== Creating DMG ==="
 rm -f "${DMG_NAME}"
 hdiutil create "${DMG_NAME}" \
     -srcfolder "${APP_BUNDLE}" \
@@ -52,4 +52,4 @@ hdiutil create "${DMG_NAME}" \
     -format UDZO \
     -volname "${PRODUCT}"
 
-echo "=== 完了: ${DMG_NAME} ==="
+echo "=== Done: ${DMG_NAME} ==="

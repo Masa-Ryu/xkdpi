@@ -2,7 +2,7 @@ import AppKit
 
 // MARK: - HzBadge
 
-/// リフレッシュレートをピル形状のバッジとして表示するラベル
+/// Label that displays a refresh rate as a pill-shaped badge.
 private final class HzBadge: NSTextField {
     init(text: String) {
         super.init(frame: .zero)
@@ -17,7 +17,7 @@ private final class HzBadge: NSTextField {
         translatesAutoresizingMaskIntoConstraints = false
     }
 
-    required init?(coder: NSCoder) { fatalError("XIB 非対応") }
+    required init?(coder: NSCoder) { fatalError("XIB is not supported") }
 
     override var intrinsicContentSize: NSSize {
         var s = super.intrinsicContentSize
@@ -40,10 +40,10 @@ private final class HzBadge: NSTextField {
 
 // MARK: - DisplaySectionView
 
-/// ディスプレイ1台分の情報を表示するビュー
+/// View that displays information for one display.
 ///
-/// フィルター（HiDPI + リフレッシュレート）で表示する解像度を絞り込む。
-/// 解像度ラジオボタンをクリックすると即時適用（最高レートのモードを選択）。
+/// Filters visible resolutions by HiDPI and refresh rate.
+/// Clicking a resolution radio button applies it immediately using the highest refresh-rate mode.
 public final class DisplaySectionView: NSView {
 
     // MARK: - Properties
@@ -51,19 +51,19 @@ public final class DisplaySectionView: NSView {
     private var display: Display
     private var onModeSelected: (DisplayMode) -> Void
 
-    /// HiDPI モードのみ表示するフィルター（デフォルト ON）
+    /// Filter that shows only HiDPI modes. Defaults to on.
     private var hiDPIFilterEnabled: Bool = true
-    /// 表示するリフレッシュレートのフィルター（デフォルト: 全レート）
+    /// Filter for refresh rates to show. Defaults to all rates.
     private var selectedRates: Set<Double>
-    /// 全ユニークレートを降順で管理（チェックボックスのタグインデックスに使用）
+    /// All unique refresh rates in descending order, used for checkbox tag indexes.
     private var availableRates: [Double] = []
 
-    /// 現在選択中の解像度（幅×高さ）
+    /// Currently selected resolution.
     private var selectedRes: (width: Int, height: Int)
 
     private let resStack = NSStackView()
     private let rateStack = NSStackView()
-    /// 「現在: ...」ラベル（モード切替後にテキストのみ更新するため保持）
+    /// Current mode label, retained so mode switches can update only the text.
     private let currentModeLabel = NSTextField(labelWithString: "")
 
     // MARK: - Coordinate System
@@ -80,19 +80,19 @@ public final class DisplaySectionView: NSView {
         buildUI()
     }
 
-    required init?(coder: NSCoder) { fatalError("XIB 非対応") }
+    required init?(coder: NSCoder) { fatalError("XIB is not supported") }
 
     // MARK: - Public API
 
-    /// モード切替後に呼び出す。フィルター状態は保持したまま「現在:」表示と選択状態だけ更新する。
+    /// Called after a mode switch. Preserves filters and updates only the current label and selection.
     public func updateCurrentMode(to mode: DisplayMode) {
         display.currentMode = mode
-        currentModeLabel.stringValue = "現在: \(mode.displayString)"
+        currentModeLabel.stringValue = "Current: \(mode.displayString)"
         selectedRes = (mode.width, mode.height)
         rebuildResolutionButtons()
     }
 
-    // MARK: - Active groups（HiDPI + レート両フィルター適用済み）
+    // MARK: - Active groups with HiDPI and rate filters applied
 
     private func activeGroups() -> [(label: String, modes: [DisplayMode])] {
         display.filteredModeGroups(hiDPIOnly: hiDPIFilterEnabled, rates: selectedRates)
@@ -115,47 +115,47 @@ public final class DisplaySectionView: NSView {
             container.bottomAnchor.constraint(equalTo: bottomAnchor),
         ])
 
-        // ① ディスプレイ名 + 種別バッジ（内蔵 / 外部）
+        // Display name and type badge.
         let nameRow = NSStackView()
         nameRow.orientation = .horizontal
         nameRow.alignment = .centerY
         nameRow.spacing = 8
         let nameLabel = makeLabel(display.name, bold: true, size: 14)
-        let typeLabel = makeLabel(display.builtin ? "内蔵" : "外部", bold: false, size: 11)
+        let typeLabel = makeLabel(display.builtin ? "Built-in" : "External", bold: false, size: 11)
         typeLabel.textColor = display.builtin ? .systemBlue : .secondaryLabelColor
         nameRow.addArrangedSubview(nameLabel)
         nameRow.addArrangedSubview(typeLabel)
         container.addArrangedSubview(nameRow)
 
-        // ② 現在のモード
-        currentModeLabel.stringValue = "現在: \(display.currentMode.displayString)"
+        // Current mode.
+        currentModeLabel.stringValue = "Current: \(display.currentMode.displayString)"
         currentModeLabel.font = .systemFont(ofSize: 12)
         currentModeLabel.textColor = .secondaryLabelColor
         currentModeLabel.isSelectable = false
         container.addArrangedSubview(currentModeLabel)
 
-        // セパレーター
+        // Separator.
         let sep = NSBox()
         sep.boxType = .separator
         sep.translatesAutoresizingMaskIntoConstraints = false
         container.addArrangedSubview(sep)
         sep.widthAnchor.constraint(equalTo: container.widthAnchor).isActive = true
 
-        // ③ HiDPI フィルター チェックボックス
-        let filterCheck = NSButton(checkboxWithTitle: "HiDPI モードのみ表示",
+        // HiDPI filter checkbox.
+        let filterCheck = NSButton(checkboxWithTitle: "Show HiDPI modes only",
                                    target: self, action: #selector(hiDPIFilterToggled(_:)))
         filterCheck.state = .on
         container.addArrangedSubview(filterCheck)
 
-        // ④ リフレッシュレート フィルター チェックボックス群
-        container.addArrangedSubview(makeSectionLabel("リフレッシュレート"))
+        // Refresh-rate filter checkboxes.
+        container.addArrangedSubview(makeSectionLabel("Refresh Rate"))
         rateStack.orientation = .vertical
         rateStack.alignment = .leading
         rateStack.spacing = 4
         container.addArrangedSubview(rateStack)
         buildRateCheckboxes()
 
-        // ⑤ 解像度 ラジオボタン
+        // Resolution radio buttons.
         resStack.orientation = .vertical
         resStack.alignment = .leading
         resStack.spacing = 4
@@ -164,7 +164,7 @@ public final class DisplaySectionView: NSView {
         rebuildResolutionButtons()
     }
 
-    // MARK: - レートチェックボックス構築
+    // MARK: - Rate Checkbox Construction
 
     private func buildRateCheckboxes() {
         rateStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
@@ -178,7 +178,7 @@ public final class DisplaySectionView: NSView {
         }
     }
 
-    // MARK: - Resolution ボタン再構築
+    // MARK: - Resolution Button Rebuild
 
     private func rebuildResolutionButtons() {
         let groups = activeGroups()
@@ -196,18 +196,18 @@ public final class DisplaySectionView: NSView {
             resStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
             if groups.isEmpty {
-                resStack.addArrangedSubview(makeLabel("利用可能なモードがありません", bold: false, size: 12))
+                resStack.addArrangedSubview(makeLabel("No available modes", bold: false, size: 12))
                 return
             }
 
-            // 推奨ラベル（filteredModeGroups のラベル形式に合わせる）
+            // Match the recommended label to the filteredModeGroups label format.
             let recommendedLabel: String? = recommended.map { rec in
                 hiDPIFilterEnabled
                     ? "\(rec.width)\u{00D7}\(rec.height)"
                     : rec.resolutionString
             }
 
-            // Recommended セクション
+            // Recommended section.
             if let rec = recommended,
                let recLabel = recommendedLabel,
                let recGroup = groups.first(where: { $0.label == recLabel }) {
@@ -222,7 +222,7 @@ public final class DisplaySectionView: NSView {
                 resStack.addArrangedSubview(row)
             }
 
-            // Other Modes セクション
+            // Other Modes section.
             let otherGroups = groups.filter { $0.label != recommendedLabel }
             if !otherGroups.isEmpty {
                 resStack.addArrangedSubview(makeSectionLabel("Other Modes"))
@@ -260,7 +260,7 @@ public final class DisplaySectionView: NSView {
     }
 
     @objc private func recommendedButtonTapped(_ sender: NSButton) {
-        // "⭐ " (star + space = 2 chars) を除去してラベルを復元
+        // Remove "⭐ " (star + space = 2 chars) to restore the label.
         let label = String(sender.title.dropFirst(2))
         if let group = activeGroups().first(where: { $0.label == label }),
            let mode = group.modes.max(by: { $0.refreshRate < $1.refreshRate }) {
@@ -270,7 +270,7 @@ public final class DisplaySectionView: NSView {
     }
 
     @objc private func resolutionButtonTapped(_ sender: NSButton) {
-        // 選択中のグループの最高レートモード（modes は rate 降順）を即時適用
+        // Apply the highest-rate mode from the selected group immediately.
         if let group = activeGroups().first(where: { $0.label == sender.title }),
            let mode = group.modes.first {
             selectedRes = (mode.width, mode.height)
@@ -294,12 +294,12 @@ public final class DisplaySectionView: NSView {
         return label
     }
 
-    /// ピル形状の Hz バッジを生成する
+    /// Creates a pill-shaped Hz badge.
     private func makeHzBadge(_ text: String) -> HzBadge {
         HzBadge(text: text)
     }
 
-    /// ラジオボタン + Hz バッジの横並び行を生成する
+    /// Creates a horizontal row with a radio button and Hz badges.
     private func makeResolutionRow(
         radioTitle: String,
         modes: [DisplayMode],
@@ -316,7 +316,7 @@ public final class DisplaySectionView: NSView {
         btn.state = isSelected ? .on : .off
         row.addArrangedSubview(btn)
 
-        // リフレッシュレートを降順でバッジ表示
+        // Display refresh rates as badges in descending order.
         let rates = modes.map { $0.refreshRate }.sorted(by: >)
         for rate in rates {
             row.addArrangedSubview(makeHzBadge("\(String(format: "%g", rate))Hz"))

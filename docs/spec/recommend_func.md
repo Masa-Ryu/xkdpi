@@ -1,264 +1,248 @@
-# xkdpi 仕様書（議論機能限定版）
+# xkdpi Recommendation Feature Specification
 
-## 1. 概要
+## 1. Overview
 
-**xkdpi** は macOS 用 GUI アプリケーションであり、\
-接続されているディスプレイの **HiDPI
-表示モードを最適化・適用するツール**である。
+**xkdpi** is a macOS GUI application that optimizes and applies HiDPI display
+modes for connected displays.
 
-本ツールは特に以下の一般的な外部ディスプレイ環境に対応する。
+The tool especially targets common external display environments:
 
--   **4K (3840×2160)**
--   **WQHD (2560×1440)**
+- 27-inch 4K displays.
+- 32-inch 4K displays.
+- WQHD displays.
 
-ユーザーの視認性と作業領域のバランスを考慮し、\
-**PPI（画素密度）を基に最適な HiDPI UI 解像度を提案し適用する。**
+It considers the balance between readability and workspace, then recommends and
+applies an optimal HiDPI UI resolution based on PPI.
 
-また、設定は保存され、**macOS 再起動後も自動起動して設定を再適用する。**
+Settings are saved, and the app can start automatically after macOS restarts to
+reapply saved settings.
 
-------------------------------------------------------------------------
+# 2. Target Displays
 
-# 2. 対象ディスプレイ
+The tool mainly targets these resolutions:
 
-本ツールは以下の解像度を主対象とする。
+| Resolution | Description |
+| --- | --- |
+| 2560×1440 | WQHD monitor |
+| 3840×2160 | 4K monitor |
 
-  解像度      説明
-  ----------- -------------
-  2560×1440   WQHD モニタ
-  3840×2160   4K モニタ
+Reasons:
 
-理由
+- Many macOS users use these external monitor types.
+- HiDPI scaling issues are common in this range.
 
--   macOS ユーザーの外部モニタの多くがこの2種類
--   HiDPI スケーリング問題が最も多く発生する領域
+# 3. How macOS HiDPI Works
 
-------------------------------------------------------------------------
+macOS implements HiDPI using this flow:
 
-# 3. macOS HiDPI の仕組み
+```text
+UI resolution
+  -> 2x rendering
+  -> downscale to display resolution
+```
 
-macOS は以下の方式で HiDPI を実現している。
+Example:
 
-    UI解像度
-    ↓
-    2倍レンダリング
-    ↓
-    ディスプレイ解像度へ縮小
+```text
+2560×1440 UI
+  -> 5120×2880 rendering
+  -> display output
+```
 
-例
+# 4. PPI-Aware Optimization
 
-    UI: 2560×1440
-    Render: 5120×2880
-    Output: 3840×2160
+xkdpi considers PPI instead of only resolution.
 
-------------------------------------------------------------------------
+PPI formula:
 
-# 4. PPI を考慮した最適化
+```text
+sqrt(pixelWidth^2 + pixelHeight^2) / diagonalInches
+```
 
-xkdpi は **解像度だけではなく PPI を考慮する。**
+Apple's Retina design target is approximately:
 
-PPI 計算式
+```text
+220 PPI
+```
 
-    PPI = √(width² + height²) / inch
+xkdpi performs:
 
-Apple の Retina 設計は
+```text
+display resolution
+  -> PPI calculation
+  -> optimal UI size calculation
+  -> HiDPI mode recommendation
+```
 
-    約 220 PPI
+# 5. Recommended UI Resolutions
 
-を理想としている。
+## 27-Inch 4K
 
-xkdpi は
+PPI:
 
-    ディスプレイ解像度
-    ↓
-    PPI計算
-    ↓
-    最適 UI サイズ計算
-    ↓
-    HiDPI モード提案
+```text
+approximately 163
+```
 
-の処理を行う。
+Recommendation:
 
-------------------------------------------------------------------------
+```text
+2560×1440 HiDPI
+```
 
-# 5. 推奨 UI 解像度
+Reason:
 
-例
+- Good balance between workspace and readability.
 
-## 27インチ 4K
+## 32-Inch 4K
 
-PPI
+Recommendation:
 
-    約163
+```text
+3008×1692 HiDPI
+```
 
-推奨
+Reason:
 
-    2560×1440 HiDPI
+- Appropriate text size and UI density.
 
-理由
+# 6. Features
 
--   作業領域と可読性のバランスが良い
+## Display Detection
 
-------------------------------------------------------------------------
+Fetch:
 
-## 32インチ 4K
+- Resolution.
+- Refresh rate.
+- Built-in or external display type.
 
-推奨
+## Display Mode Fetching
 
-    3008×1692 HiDPI
+Fetch:
 
-理由
+- UI resolution.
+- HiDPI flag.
+- Refresh rate.
 
--   文字サイズとUI密度が適切
+## HiDPI Mode Identification
 
-------------------------------------------------------------------------
+Display example:
 
-# 6. 機能
+```text
+2560×1440 (HiDPI) 60Hz
+```
 
-## ディスプレイ検出
+## Recommended Mode Display
 
-取得
+GUI display:
 
--   Display ID
--   解像度
--   リフレッシュレート
--   内蔵 / 外部
+```text
+Recommended
+  2560×1440
+```
 
-------------------------------------------------------------------------
+## Display Mode Switching
 
-## 表示モード取得
+Users can select and apply a mode from the GUI.
 
-取得
+## Settings Persistence
 
--   UI解像度
--   HiDPI フラグ
+Saved values:
 
-------------------------------------------------------------------------
+- Display ID.
+- Mode ID.
+- Timestamp.
 
-## HiDPI モード識別
+## Restore at Launch
 
-表示例
+After macOS restarts:
 
-    2560×1440 (HiDPI)
+1. The app starts automatically.
+2. Settings are loaded.
+3. Display modes are reapplied.
 
-------------------------------------------------------------------------
+# 7. UI
 
-## 推奨モード表示
+Application type:
 
-GUI 表示
+- Standard GUI app.
+- Dock-visible.
+- Resident.
 
-    Recommended
-    ⭐ 2560×1440 HiDPI
+Display example:
 
-------------------------------------------------------------------------
+```text
+Display Name
+Current: 2560×1440 (HiDPI) 60Hz
 
-## 表示モード切替
+[x] Show HiDPI modes only
 
-ユーザーが GUI からモードを選択し適用できる。
+Refresh Rate
+[x] 60Hz
+[x] 120Hz
 
-------------------------------------------------------------------------
+Recommended
+(*) 2560×1440  [60Hz] [120Hz]
 
-## 設定保存
+Other Modes
+( ) 1920×1080  [60Hz]
+```
 
-保存内容
+# 8. Automatic Startup
 
--   display_id
--   mode_id
+xkdpi starts at macOS login when enabled.
 
-------------------------------------------------------------------------
+Method:
 
-## 起動時復元
+- ServiceManagement login item.
+- Compatibility LaunchAgent helper script.
 
-macOS 再起動後
+Location:
 
-1.  アプリ自動起動
-2.  設定読み込み
-3.  表示モード再適用
+```text
+~/Library/LaunchAgents/com.xkdpi.displaycontroller.plist
+```
 
-------------------------------------------------------------------------
+# 9. Development Environment
 
-# 7. GUI
+| Item | Value |
+| --- | --- |
+| Language | Swift |
+| Editor | VSCode |
+| Build | Swift Package Manager |
+| Test | Swift Testing |
+| Method | TDD |
 
-アプリタイプ
+# 10. TDD Targets
 
--   通常 GUI アプリ
--   Dock 表示
--   常駐
+Test targets:
 
-表示例
+- PPI calculation.
+- Recommended UI resolution calculation.
+- HiDPI detection.
+- Settings persistence and restoration.
 
-    xkdpi
+Test command:
 
-    Display: LG 4K Monitor
+```bash
+swift test
+```
 
-    Recommended
-    ⭐ 2560×1440 (HiDPI)
+# 11. Distribution
 
-    Other Modes
-    1920×1080
-    2304×1296
-    3008×1692
-    3840×2160
+Distribution format:
 
-------------------------------------------------------------------------
+- Source-based installation.
+- Locally built app.
+- Optional DMG.
 
-# 8. 自動起動
+Create:
 
-macOS ログイン時に起動する。
+```bash
+./scripts/build_dmg.sh
+```
 
-方式
+# 12. Summary
 
-    LaunchAgent
-
-配置
-
-    ~/Library/LaunchAgents
-
-------------------------------------------------------------------------
-
-# 9. 開発環境
-
-  項目       内容
-  ---------- -----------------------
-  言語       Swift
-  エディタ   VSCode
-  ビルド     Swift Package Manager
-  テスト     XCTest
-  開発手法   TDD
-
-------------------------------------------------------------------------
-
-# 10. TDD 対象
-
-テスト対象
-
--   PPI 計算
--   推奨 UI 解像度計算
--   HiDPI 判定
--   設定保存 / 復元
-
-テスト実行
-
-    swift test
-
-------------------------------------------------------------------------
-
-# 11. 配布
-
-配布形式
-
-    .dmg
-
-作成
-
-    hdiutil create xkdpi.dmg -srcfolder xkdpi.app
-
-------------------------------------------------------------------------
-
-# 12. まとめ
-
-xkdpi は
-
-**解像度切替ツールではなく\
-PPI を考慮した HiDPI 最適化ツール**
-
-として設計する。
+xkdpi is designed as a PPI-aware HiDPI optimization tool, not just a resolution
+switching tool.

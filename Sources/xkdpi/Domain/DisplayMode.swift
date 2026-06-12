@@ -1,19 +1,19 @@
 import Foundation
 
-/// ディスプレイ表示モード（論理解像度とピクセル解像度を保持）
+/// Display mode containing logical and pixel resolutions.
 public struct DisplayMode: Equatable, Hashable, Sendable {
 
-    /// CoreGraphics の ioDisplayModeID
+    /// CoreGraphics ioDisplayModeID.
     public let id: Int32
-    /// 論理幅（ポイント）
+    /// Logical width in points.
     public let width: Int
-    /// 論理高さ（ポイント）
+    /// Logical height in points.
     public let height: Int
-    /// 物理幅（ピクセル）
+    /// Physical width in pixels.
     public let pixelWidth: Int
-    /// 物理高さ（ピクセル）
+    /// Physical height in pixels.
     public let pixelHeight: Int
-    /// リフレッシュレート（Hz）
+    /// Refresh rate in Hz.
     public let refreshRate: Double
 
     public init(
@@ -32,24 +32,24 @@ public struct DisplayMode: Equatable, Hashable, Sendable {
         self.refreshRate = refreshRate
     }
 
-    /// HiDPI 判定: 物理解像度が論理解像度より大きい場合に true
+    /// HiDPI check: true when the physical resolution is greater than the logical resolution.
     public var isHiDPI: Bool {
         pixelWidth > width || pixelHeight > height
     }
 
-    /// 解像度部分の表示文字列（例: "2560×1440 (HiDPI)" / "1920×1080"）
-    /// 同じ解像度・HiDPI 設定のモードをグループ化するキーとしても使用する
+    /// Display string for the resolution portion, for example "2560×1440 (HiDPI)" or "1920×1080".
+    /// Also used as the key for grouping modes with the same resolution and HiDPI setting.
     public var resolutionString: String {
         let res = "\(width)\u{00D7}\(height)"
         return isHiDPI ? "\(res) (HiDPI)" : res
     }
 
-    /// リフレッシュレートの表示文字列（例: "120Hz" / "59.94Hz"）
+    /// Display string for the refresh rate, for example "120Hz" or "59.94Hz".
     public var refreshRateString: String {
         "\(String(format: "%g", refreshRate))Hz"
     }
 
-    /// GUI 表示用の完全な文字列（例: "2560×1440 (HiDPI) 120Hz"）
+    /// Full display string for the GUI, for example "2560×1440 (HiDPI) 120Hz".
     public var displayString: String {
         "\(resolutionString) \(refreshRateString)"
     }

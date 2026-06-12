@@ -1,14 +1,14 @@
 import CoreGraphics
 
-/// ディスプレイ情報リポジトリプロトコル
-/// MacDisplayRepository（実機）と MockDisplayRepository（テスト）を交換可能にする DI 境界
+/// Repository protocol for display information.
+/// DI boundary that makes MacDisplayRepository for real hardware and MockDisplayRepository for tests interchangeable.
 public protocol DisplayRepository: Sendable {
-    /// 接続中の全ディスプレイを返す（利用可能なモード一覧を含む）
+    /// Returns all connected displays, including their available modes.
     func fetchDisplays() throws -> [Display]
-    /// 指定ディスプレイの利用可能な全モードを返す
+    /// Returns all available modes for the specified display.
     func fetchModes(for displayID: CGDirectDisplayID) throws -> [DisplayMode]
-    /// 指定ディスプレイの現在のモードを返す
+    /// Returns the current mode for the specified display.
     func fetchCurrentMode(for displayID: CGDirectDisplayID) throws -> DisplayMode
-    /// 指定ディスプレイのモードを切替える（CoreGraphics 委譲）
+    /// Switches the mode for the specified display, delegating to CoreGraphics.
     func switchMode(displayID: CGDirectDisplayID, to modeID: Int32) throws
 }
