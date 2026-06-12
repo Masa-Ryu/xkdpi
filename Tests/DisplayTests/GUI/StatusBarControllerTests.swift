@@ -19,6 +19,13 @@ struct StatusBarControllerTests {
         #expect(controller.launchAtLoginMenuState == .on)
     }
 
+    @Test @MainActor func init_withAppVersion_showsVersionMenuItem() {
+        let loginItems = MockLoginItemManager(isEnabled: false)
+        let controller = makeController(loginItems: loginItems, appVersion: "1.2.3")
+
+        #expect(controller.appVersionMenuTitle == "バージョン 1.2.3")
+    }
+
     @Test @MainActor func toggleLaunchAtLogin_whenDisabled_registersAndChecksMenuItem() {
         let loginItems = MockLoginItemManager(isEnabled: false)
         let controller = makeController(loginItems: loginItems)
@@ -58,10 +65,12 @@ struct StatusBarControllerTests {
     @MainActor
     private func makeController(
         loginItems: MockLoginItemManager,
+        appVersion: String = "テスト版",
         showError: @escaping (String, String) -> Void = { _, _ in }
     ) -> StatusBarController {
         StatusBarController(
             loginItemManager: loginItems,
+            appVersion: appVersion,
             openSettings: {},
             showError: showError
         )

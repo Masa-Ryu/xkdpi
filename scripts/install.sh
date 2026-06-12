@@ -21,6 +21,11 @@ if ! command -v hdiutil >/dev/null 2>&1; then
     exit 1
 fi
 
+if pgrep -x "${PRODUCT}" >/dev/null 2>&1; then
+    echo "error: ${PRODUCT} が起動中です。ステータスバーのメニューから終了してから再実行してください。" >&2
+    exit 1
+fi
+
 echo "=== ${PRODUCT} をビルドします ==="
 "${SCRIPT_DIR}/build_dmg.sh"
 

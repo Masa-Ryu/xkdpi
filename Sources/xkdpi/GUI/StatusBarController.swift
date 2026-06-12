@@ -11,11 +11,13 @@ public final class StatusBarController: NSObject {
     private let showError: (String, String) -> Void
 
     private let openSettingsItem = NSMenuItem(title: "ディスプレイ設定を開く", action: nil, keyEquivalent: "")
+    private let versionItem: NSMenuItem
     private let launchAtLoginItem = NSMenuItem(title: "ログイン時に起動", action: nil, keyEquivalent: "")
     private let quitItem = NSMenuItem(title: "終了", action: nil, keyEquivalent: "q")
 
     public init(
         loginItemManager: LoginItemManaging,
+        appVersion: String? = nil,
         logger: Logger = Logger(label: "StatusBarController"),
         openSettings: @escaping () -> Void,
         showError: @escaping (String, String) -> Void
@@ -25,6 +27,7 @@ public final class StatusBarController: NSObject {
         self.logger = logger
         self.openSettings = openSettings
         self.showError = showError
+        self.versionItem = NSMenuItem(title: "バージョン \(appVersion ?? StatusBarController.defaultAppVersion())", action: nil, keyEquivalent: "")
         super.init()
 
         setupStatusItem()
@@ -33,6 +36,10 @@ public final class StatusBarController: NSObject {
 
     public var launchAtLoginMenuState: NSControl.StateValue {
         launchAtLoginItem.state
+    }
+
+    public var appVersionMenuTitle: String {
+        versionItem.title
     }
 
     @objc public func openSettingsFromMenu(_ sender: Any?) {
@@ -78,8 +85,11 @@ public final class StatusBarController: NSObject {
         quitItem.target = self
         quitItem.action = #selector(quit(_:))
 
+        versionItem.isEnabled = false
+
         let menu = NSMenu()
         menu.addItem(openSettingsItem)
+        menu.addItem(versionItem)
         menu.addItem(.separator())
         menu.addItem(launchAtLoginItem)
         menu.addItem(.separator())
@@ -98,5 +108,22 @@ public final class StatusBarController: NSObject {
         image.isTemplate = true
         image.size = NSSize(width: 20, height: 14)
         return image
+    }
+
+    private static func defaultAppVersion() -> String {
+        let infoDictionary = Bundle.main.infoDictionary
+        let shortVersion = infoDictionary?["CFBundleShortVersionString"] as? String
+        let buildVersion = infoDictionary?["CFBundleVersion"] as? String
+
+        switch (shortVersion, buildVersion) {
+        case let (short?, build?) where short != build:
+            return "\(short) (\(build))"
+        case let (short?, _):
+            return short
+        case let (_, build?):
+            return build
+        default:
+            return "開発版"
+        }
     }
 }
