@@ -6,8 +6,15 @@ PLIST_NAME="${BUNDLE_ID}.plist"
 AGENTS_DIR="${HOME}/Library/LaunchAgents"
 PLIST_PATH="${AGENTS_DIR}/${PLIST_NAME}"
 APP_PATH="/Applications/xkdpi.app/Contents/MacOS/xkdpi"
+USER_ID="$(id -u)"
 
 mkdir -p "${AGENTS_DIR}"
+
+if [[ -f "${PLIST_PATH}" ]]; then
+    launchctl bootout "gui/${USER_ID}" "${PLIST_PATH}" >/dev/null 2>&1 \
+        || launchctl unload "${PLIST_PATH}" >/dev/null 2>&1 \
+        || true
+fi
 
 cat > "${PLIST_PATH}" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -33,5 +40,6 @@ cat > "${PLIST_PATH}" << PLIST
 </plist>
 PLIST
 
-launchctl load "${PLIST_PATH}"
+launchctl bootstrap "gui/${USER_ID}" "${PLIST_PATH}" >/dev/null 2>&1 \
+    || launchctl load "${PLIST_PATH}"
 echo "LaunchAgent 登録完了: ${PLIST_PATH}"
