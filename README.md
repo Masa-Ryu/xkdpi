@@ -31,6 +31,10 @@ If `/Applications/xkdpi.app` already exists, the installer asks before
 overwriting it. If copying to `/Applications` requires administrator
 permissions, it retries with `sudo`.
 
+This project distributes source-based installation only. The locally built app
+is not Developer ID signed or notarized, so macOS may require manual approval on
+first launch.
+
 ## Manual Build
 
 ```bash
