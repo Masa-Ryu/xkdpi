@@ -1,21 +1,21 @@
 import CoreGraphics
 
-/// 接続中のディスプレイ情報
+/// Connected display information.
 public struct Display: Sendable {
 
-    /// CoreGraphics ディスプレイID（CGDirectDisplayID = UInt32）
+    /// CoreGraphics display ID (CGDirectDisplayID = UInt32).
     public let id: CGDirectDisplayID
-    /// ディスプレイ名（NSScreen.localizedName から取得）
+    /// Display name from NSScreen.localizedName.
     public let name: String
-    /// 内蔵ディスプレイか否か
+    /// Whether this is a built-in display.
     public let builtin: Bool
-    /// 現在の表示モード
+    /// Current display mode.
     public var currentMode: DisplayMode
-    /// 利用可能な表示モード一覧（HiDPI 含む全モード）
+    /// All available display modes, including HiDPI modes.
     public var availableModes: [DisplayMode]
-    /// 物理的な横幅（mm）。取得できない場合は nil
+    /// Physical width in millimeters, or nil when unavailable.
     public let physicalWidthMM: Double?
-    /// 物理的な縦幅（mm）。取得できない場合は nil
+    /// Physical height in millimeters, or nil when unavailable.
     public let physicalHeightMM: Double?
 
     public init(
@@ -36,8 +36,8 @@ public struct Display: Sendable {
         self.physicalHeightMM = physicalHeightMM
     }
 
-    /// PPI（pixels per inch）。物理サイズが不明な場合は nil。
-    /// 全モードの最大ピクセル解像度と物理寸法から算出する。
+    /// PPI (pixels per inch), or nil when the physical size is unknown.
+    /// Calculated from the maximum pixel resolution across all modes and the physical dimensions.
     public var ppi: Double? {
         guard let w = physicalWidthMM, let h = physicalHeightMM, w > 0, h > 0 else { return nil }
         let maxPW = availableModes.map { $0.pixelWidth }.max() ?? currentMode.pixelWidth
@@ -47,7 +47,7 @@ public struct Display: Sendable {
         return diagPx / diagInch
     }
 
-    /// availableModes を resolutionString でグループ化する（挿入順を保持）
+    /// Groups availableModes by resolutionString while preserving insertion order.
     public var modeGroups: [(resolutionString: String, modes: [DisplayMode])] {
         var dict: [String: [DisplayMode]] = [:]
         var order: [String] = []
@@ -59,8 +59,8 @@ public struct Display: Sendable {
         return order.map { ($0, dict[$0]!) }
     }
 
-    /// HiDPI モードのみを解像度でグループ化した一覧（挿入順を保持）
-    /// resolutionLabel は "2560×1440" 形式（"(HiDPI)" サフィックスなし）
+    /// Groups only HiDPI modes by resolution while preserving insertion order.
+    /// resolutionLabel uses the "2560×1440" format without a "(HiDPI)" suffix.
     public var hiDPIModeGroups: [(resolutionLabel: String, modes: [DisplayMode])] {
         var dict: [String: [DisplayMode]] = [:]
         var order: [String] = []
@@ -72,11 +72,11 @@ public struct Display: Sendable {
         return order.map { ($0, dict[$0]!) }
     }
 
-    /// Apple Retina 目標 PPI（220）を基に算出した推奨 HiDPI モード。
-    /// 物理サイズ不明・HiDPI モード無しの場合は nil。
+    /// Recommended HiDPI mode calculated from Apple's Retina target PPI (220).
+    /// Returns nil when physical size is unknown or no HiDPI modes exist.
     public var recommendedMode: DisplayMode? {
         guard let w = physicalWidthMM, w > 0 else { return nil }
-        guard ppi != nil else { return nil }  // physicalHeightMM ガードを ppi に委譲
+        guard ppi != nil else { return nil }  // Delegate the physicalHeightMM guard to ppi.
 
         let targetLogicalWidth = (w / 25.4) * (220.0 / 2.0)
 
@@ -91,14 +91,14 @@ public struct Display: Sendable {
         return bestGroup?.modes.max { $0.refreshRate < $1.refreshRate }
     }
 
-    /// HiDPI フィルターとリフレッシュレートフィルターを組み合わせたグループ一覧（GUI フィルター用）
+    /// Groups modes using the HiDPI and refresh-rate filters for GUI filtering.
     ///
     /// - Parameters:
-    ///   - hiDPIOnly: `true` のとき HiDPI モードのみを対象とする
-    ///   - rates: 含めるリフレッシュレートの集合。空のとき全レートを含める
-    /// - Returns: ラベルとモード群の配列（挿入順を保持）
-    ///   - `hiDPIOnly: true` のとき、ラベルは "2560×1440" 形式（"(HiDPI)" サフィックスなし）
-    ///   - `hiDPIOnly: false` のとき、ラベルは `resolutionString` 形式（HiDPI には "(HiDPI)" サフィックスあり）
+    ///   - hiDPIOnly: When true, includes only HiDPI modes.
+    ///   - rates: Refresh rates to include. An empty set includes all rates.
+    /// - Returns: Label and mode groups while preserving insertion order.
+    ///   - When `hiDPIOnly` is true, labels use the "2560×1440" format without a "(HiDPI)" suffix.
+    ///   - When `hiDPIOnly` is false, labels use `resolutionString`, including "(HiDPI)" for HiDPI modes.
     public func filteredModeGroups(hiDPIOnly: Bool, rates: Set<Double>) -> [(label: String, modes: [DisplayMode])] {
         var filtered = availableModes
         if hiDPIOnly {

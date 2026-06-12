@@ -1,13 +1,13 @@
 import CoreGraphics
 
-/// xkdpi のエラー定義
+/// xkdpi error definitions.
 public enum DisplayError: Error, Equatable, Sendable {
-    /// ディスプレイ情報の取得失敗
+    /// Failed to fetch display information.
     case fetchFailed
-    /// 指定されたモードIDが見つからない
+    /// The specified mode ID was not found.
     case modeNotFound(modeID: Int32)
-    /// CGDisplayConfiguration の開始・完了失敗
+    /// Failed to begin or complete CGDisplayConfiguration.
     case configFailed
-    /// モード切替の実行失敗（CGError.rawValue を保持）
+    /// Failed to execute a mode switch, preserving CGError.rawValue.
     case switchFailed(Int32)
 }

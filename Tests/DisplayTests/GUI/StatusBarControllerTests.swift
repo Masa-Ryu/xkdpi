@@ -23,7 +23,7 @@ struct StatusBarControllerTests {
         let loginItems = MockLoginItemManager(isEnabled: false)
         let controller = makeController(loginItems: loginItems, appVersion: "1.2.3")
 
-        #expect(controller.appVersionMenuTitle == "バージョン 1.2.3")
+        #expect(controller.appVersionMenuTitle == "Version 1.2.3")
     }
 
     @Test @MainActor func toggleLaunchAtLogin_whenDisabled_registersAndChecksMenuItem() {
@@ -59,13 +59,13 @@ struct StatusBarControllerTests {
         #expect(loginItems.setEnabledCalls == [true])
         #expect(controller.launchAtLoginMenuState == .off)
         #expect(reportedErrors.count == 1)
-        #expect(reportedErrors[0].0 == "ログイン時起動の設定に失敗しました")
+        #expect(reportedErrors[0].0 == "Failed to configure launch at login")
     }
 
     @MainActor
     private func makeController(
         loginItems: MockLoginItemManager,
-        appVersion: String = "テスト版",
+        appVersion: String = "Test",
         showError: @escaping (String, String) -> Void = { _, _ in }
     ) -> StatusBarController {
         StatusBarController(

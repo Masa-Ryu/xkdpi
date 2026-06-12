@@ -1,7 +1,7 @@
 import AppKit
 
-// NSApplication のメインループを手動起動
-// @NSApplicationMain は SPM executable target では使用不可のため手動起動
+// Manually start the NSApplication main loop.
+// @NSApplicationMain is not available for SPM executable targets.
 let app = NSApplication.shared
 app.setActivationPolicy(.accessory)
 

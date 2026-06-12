@@ -1,13 +1,13 @@
 import Foundation
 import ServiceManagement
 
-/// ログイン時起動の登録状態を管理するインターフェース
+/// Interface that manages launch-at-login registration state.
 public protocol LoginItemManaging: AnyObject {
     var isEnabled: Bool { get }
     func setEnabled(_ enabled: Bool) throws
 }
 
-/// ServiceManagement を使用したログイン項目管理
+/// Login item management backed by ServiceManagement.
 public final class LoginItemService: LoginItemManaging {
 
     public init() {}

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Key Documents
 
-- `docs/spec/spec.md` — 要件仕様書（機能仕様・アーキテクチャ・データモデル・テスト戦略など）
+- `docs/spec/spec.md` — Requirements specification, including functionality, architecture, data model, and test strategy.
 
 ## Project Overview
 

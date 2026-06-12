@@ -40,7 +40,7 @@ struct DisplayTests {
     // MARK: - modeGroups
 
     @Test func modeGroups_groupsByResolution() {
-        // 2560×1440(HiDPI) × 2レート + 1920×1080 × 1レート → 2グループ
+        // 2560×1440 (HiDPI) with two rates plus 1920×1080 with one rate -> two groups.
         let hiDPI60  = DisplayMode(id: 1, width: 2560, height: 1440,
                                    pixelWidth: 5120, pixelHeight: 2880, refreshRate: 60.0)
         let hiDPI120 = DisplayMode(id: 2, width: 2560, height: 1440,
@@ -63,7 +63,7 @@ struct DisplayTests {
                               pixelWidth: 1920, pixelHeight: 1080, refreshRate: 60.0)
         let qhd = DisplayMode(id: 2, width: 2560, height: 1440,
                               pixelWidth: 5120, pixelHeight: 2880, refreshRate: 60.0)
-        // fhd が先に並んでいる場合、グループ順も fhd が先
+        // When fhd appears first, the group order keeps fhd first.
         let display = Display(id: 1, name: "Test", builtin: false, currentMode: fhd,
                               availableModes: [fhd, qhd])
 
@@ -88,7 +88,7 @@ struct DisplayTests {
     // MARK: - hiDPIModeGroups
 
     @Test func hiDPIModeGroups_filtersOutNonHiDPI() {
-        // 2560×1440(HiDPI)×2レート + 1920×1080(non-HiDPI)×1レート → HiDPIグループのみ
+        // 2560×1440 (HiDPI) with two rates plus 1920×1080 (non-HiDPI) with one rate -> HiDPI groups only.
         let hiDPI60  = DisplayMode(id: 1, width: 2560, height: 1440,
                                    pixelWidth: 5120, pixelHeight: 2880, refreshRate: 60.0)
         let hiDPI120 = DisplayMode(id: 2, width: 2560, height: 1440,
@@ -105,7 +105,7 @@ struct DisplayTests {
     }
 
     @Test func hiDPIModeGroups_groupsByResolution() {
-        // 2種の HiDPI 解像度 → 2グループ
+        // Two HiDPI resolutions -> two groups.
         let qhd60  = DisplayMode(id: 1, width: 2560, height: 1440,
                                  pixelWidth: 5120, pixelHeight: 2880, refreshRate: 60.0)
         let uhd60  = DisplayMode(id: 2, width: 3840, height: 2160,
@@ -120,7 +120,7 @@ struct DisplayTests {
     }
 
     @Test func hiDPIModeGroups_preservesInsertionOrder() {
-        // uhd が先に並んでいる場合、グループ順も uhd が先
+        // When uhd appears first, the group order keeps uhd first.
         let uhd60  = DisplayMode(id: 1, width: 3840, height: 2160,
                                  pixelWidth: 7680, pixelHeight: 4320, refreshRate: 60.0)
         let qhd60  = DisplayMode(id: 2, width: 2560, height: 1440,
@@ -154,7 +154,7 @@ struct DisplayTests {
                               availableModes: [hiDPI60, hiDPI120, nonHiDPI])
 
         let groups = display.filteredModeGroups(hiDPIOnly: true, rates: [])
-        // HiDPI フィルター ON、レートフィルターなし → HiDPI 解像度のみ、ラベルに "(HiDPI)" なし
+        // HiDPI filter on and no rate filter -> HiDPI resolutions only, without "(HiDPI)" in labels.
         #expect(groups.count == 1)
         #expect(groups[0].label == "2560\u{00D7}1440")
         #expect(groups[0].modes.count == 2)
@@ -169,17 +169,17 @@ struct DisplayTests {
                               availableModes: [hiDPI60, nonHiDPI])
 
         let groups = display.filteredModeGroups(hiDPIOnly: false, rates: [])
-        // HiDPI フィルター OFF → HiDPI ラベルに "(HiDPI)" サフィックスあり
+        // HiDPI filter off -> HiDPI labels include the "(HiDPI)" suffix.
         #expect(groups.count == 2)
         #expect(groups[0].label == "2560\u{00D7}1440 (HiDPI)")
         #expect(groups[1].label == "1920\u{00D7}1080")
     }
 
     @Test func filteredModeGroups_rateFilter_removesResolutionWithOnlyOtherRate() {
-        // 2560×1440(HiDPI): 60Hz のみ → 120Hz フィルターで消える
+        // 2560×1440 (HiDPI): 60Hz only -> removed by the 120Hz filter.
         let hiDPI60only = DisplayMode(id: 1, width: 2560, height: 1440,
                                       pixelWidth: 5120, pixelHeight: 2880, refreshRate: 60.0)
-        // 3840×2160(HiDPI): 120Hz あり → 残る
+        // 3840×2160 (HiDPI): has 120Hz -> remains.
         let uhd120 = DisplayMode(id: 2, width: 3840, height: 2160,
                                  pixelWidth: 7680, pixelHeight: 4320, refreshRate: 120.0)
         let display = Display(id: 1, name: "Test", builtin: false, currentMode: hiDPI60only,
@@ -191,7 +191,7 @@ struct DisplayTests {
     }
 
     @Test func filteredModeGroups_rateFilter_keepsResolutionWithMatchingRate() {
-        // 2560×1440(HiDPI): 60Hz + 120Hz → 120Hz フィルター適用後も残る
+        // 2560×1440 (HiDPI): 60Hz plus 120Hz -> remains after the 120Hz filter.
         let hiDPI60  = DisplayMode(id: 1, width: 2560, height: 1440,
                                    pixelWidth: 5120, pixelHeight: 2880, refreshRate: 60.0)
         let hiDPI120 = DisplayMode(id: 2, width: 2560, height: 1440,
@@ -201,7 +201,7 @@ struct DisplayTests {
 
         let groups = display.filteredModeGroups(hiDPIOnly: true, rates: [120.0])
         #expect(groups.count == 1)
-        // 120Hz のみのモードが含まれる（60Hz は除外）
+        // Contains only the 120Hz mode; 60Hz is excluded.
         #expect(groups[0].modes.count == 1)
         #expect(groups[0].modes[0].refreshRate == 120.0)
     }
@@ -209,7 +209,7 @@ struct DisplayTests {
     // MARK: - ppi
 
     @Test func ppi_27inch4K_returnsApprox163() throws {
-        // 27 インチ 4K: physicalWidth ≈ 597mm, physicalHeight ≈ 336mm, native 3840×2160
+        // 27-inch 4K: physicalWidth ≈ 597mm, physicalHeight ≈ 336mm, native 3840×2160.
         let native = DisplayMode(id: 1, width: 3840, height: 2160,
                                  pixelWidth: 3840, pixelHeight: 2160, refreshRate: 60.0)
         let display = Display(id: 1, name: "Test", builtin: false,
@@ -228,7 +228,7 @@ struct DisplayTests {
     }
 
     @Test func ppi_usesMaxPixelDimensionsAcrossModes() throws {
-        // 最大 pixelWidth は 5120（HiDPI モード）
+        // The maximum pixelWidth is 5120 from the HiDPI mode.
         let hiDPI = DisplayMode(id: 1, width: 2560, height: 1440,
                                 pixelWidth: 5120, pixelHeight: 2880, refreshRate: 60.0)
         let native = DisplayMode(id: 2, width: 3840, height: 2160,
@@ -237,12 +237,12 @@ struct DisplayTests {
                               availableModes: [hiDPI, native],
                               physicalWidthMM: 597, physicalHeightMM: 336)
         let ppi = try #require(display.ppi)
-        // nativePixelW=5120, nativePixelH=2880 → 対角5786px / 27in ≈ 217 PPI
+        // nativePixelW=5120, nativePixelH=2880 -> diagonal 5786px / 27in ≈ 217 PPI.
         #expect(abs(ppi - 217.0) < 3.0, "expected ~217 PPI, got \(ppi)")
     }
 
     @Test func filteredModeGroups_emptyRates_showsAllMatchingHiDPIModes() {
-        // レートフィルターが空（全チェック）= レートでの絞り込みなし
+        // Empty rate filter, equivalent to all checked, means no rate filtering.
         let hiDPI60  = DisplayMode(id: 1, width: 2560, height: 1440,
                                    pixelWidth: 5120, pixelHeight: 2880, refreshRate: 60.0)
         let hiDPI120 = DisplayMode(id: 2, width: 2560, height: 1440,

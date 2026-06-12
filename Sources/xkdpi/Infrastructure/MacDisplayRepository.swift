@@ -1,8 +1,8 @@
 import CoreGraphics
 import AppKit
 
-/// 実機 CoreGraphics を使用したディスプレイリポジトリ
-/// 呼び出しはメインスレッド（NSApplication のメインループ）から行う前提
+/// Display repository backed by real CoreGraphics APIs.
+/// Calls are expected to run on the main thread through the NSApplication main loop.
 public final class MacDisplayRepository: DisplayRepository {
 
     private let adapter: CoreGraphicsAdapter
@@ -21,11 +21,11 @@ public final class MacDisplayRepository: DisplayRepository {
 
         let result = CGGetActiveDisplayList(16, &displayIDs, &count)
         guard result == .success else {
-            logger.error("ディスプレイ一覧取得失敗: CGError \(result.rawValue)")
+            logger.error("Failed to fetch display list: CGError \(result.rawValue)")
             throw DisplayError.fetchFailed
         }
 
-        logger.info("ディスプレイ検出: \(count)台")
+        logger.info("Detected displays: \(count)")
 
         return try (0..<Int(count)).map { i in
             let id = displayIDs[i]
@@ -65,7 +65,7 @@ public final class MacDisplayRepository: DisplayRepository {
 
     public func switchMode(displayID: CGDirectDisplayID, to modeID: Int32) throws {
         guard let cgMode = adapter.findCGMode(displayID: displayID, modeID: modeID) else {
-            logger.error("モードが見つかりません: displayID=\(displayID) modeID=\(modeID)")
+            logger.error("Mode not found: displayID=\(displayID) modeID=\(modeID)")
             throw DisplayError.modeNotFound(modeID: modeID)
         }
 
@@ -83,10 +83,10 @@ public final class MacDisplayRepository: DisplayRepository {
         let completeError = CGCompleteDisplayConfiguration(configRef, .forSession)
         guard completeError == .success else {
             CGCancelDisplayConfiguration(configRef)
-            logger.error("モード切替失敗: CGError \(completeError.rawValue)")
+            logger.error("Failed to switch mode: CGError \(completeError.rawValue)")
             throw DisplayError.switchFailed(completeError.rawValue)
         }
 
-        logger.info("モード切替成功: displayID=\(displayID) modeID=\(modeID)")
+        logger.info("Mode switch succeeded: displayID=\(displayID) modeID=\(modeID)")
     }
 }

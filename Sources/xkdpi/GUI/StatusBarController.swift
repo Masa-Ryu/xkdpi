@@ -1,6 +1,6 @@
 import AppKit
 
-/// ステータスバー項目とメニューを管理する
+/// Manages the status bar item and menu.
 @MainActor
 public final class StatusBarController: NSObject {
 
@@ -10,10 +10,10 @@ public final class StatusBarController: NSObject {
     private let openSettings: () -> Void
     private let showError: (String, String) -> Void
 
-    private let openSettingsItem = NSMenuItem(title: "ディスプレイ設定を開く", action: nil, keyEquivalent: "")
+    private let openSettingsItem = NSMenuItem(title: "Open Display Settings", action: nil, keyEquivalent: "")
     private let versionItem: NSMenuItem
-    private let launchAtLoginItem = NSMenuItem(title: "ログイン時に起動", action: nil, keyEquivalent: "")
-    private let quitItem = NSMenuItem(title: "終了", action: nil, keyEquivalent: "q")
+    private let launchAtLoginItem = NSMenuItem(title: "Launch at Login", action: nil, keyEquivalent: "")
+    private let quitItem = NSMenuItem(title: "Quit", action: nil, keyEquivalent: "q")
 
     public init(
         loginItemManager: LoginItemManaging,
@@ -27,7 +27,7 @@ public final class StatusBarController: NSObject {
         self.logger = logger
         self.openSettings = openSettings
         self.showError = showError
-        self.versionItem = NSMenuItem(title: "バージョン \(appVersion ?? StatusBarController.defaultAppVersion())", action: nil, keyEquivalent: "")
+        self.versionItem = NSMenuItem(title: "Version \(appVersion ?? StatusBarController.defaultAppVersion())", action: nil, keyEquivalent: "")
         super.init()
 
         setupStatusItem()
@@ -52,8 +52,8 @@ public final class StatusBarController: NSObject {
         do {
             try loginItemManager.setEnabled(nextEnabled)
         } catch {
-            logger.error("ログイン時起動の設定失敗: \(error)")
-            showError("ログイン時起動の設定に失敗しました", error.localizedDescription)
+            logger.error("Failed to configure launch at login: \(error)")
+            showError("Failed to configure launch at login", error.localizedDescription)
         }
 
         updateLaunchAtLoginState()
@@ -123,7 +123,7 @@ public final class StatusBarController: NSObject {
         case let (_, build?):
             return build
         default:
-            return "開発版"
+            return "Development"
         }
     }
 }

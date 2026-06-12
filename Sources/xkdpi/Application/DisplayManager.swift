@@ -1,4 +1,4 @@
-/// ディスプレイ一覧の取得・管理を担うサービス
+/// Service responsible for fetching and managing displays.
 public final class DisplayManager: Sendable {
 
     private let repository: any DisplayRepository
@@ -9,9 +9,9 @@ public final class DisplayManager: Sendable {
         self.logger = logger
     }
 
-    /// 接続中のすべてのディスプレイを返す
+    /// Returns all connected displays.
     public func fetchDisplays() throws -> [Display] {
-        logger.debug("ディスプレイ一覧取得")
+        logger.debug("Fetching displays")
         return try repository.fetchDisplays()
     }
 }

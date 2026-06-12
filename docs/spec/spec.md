@@ -1,428 +1,329 @@
-# SPEC.md --- xkdpi
+# xkdpi Specification
 
-macOS HiDPI Display Mode Controller
+# 1. Overview
 
-------------------------------------------------------------------------
+**xkdpi** is a resident macOS GUI application that manages and switches HiDPI
+display modes for connected displays.
 
-# 1. 概要
+Users can inspect each display's current mode and available modes from the GUI,
+then switch to any available mode.
 
-**xkdpi** は macOS 上で動作する **常駐型GUIアプリケーション**であり、\
-接続されているディスプレイの **HiDPI表示モードの管理と切替** を行う。
+Settings are saved and, after macOS restarts:
 
-ユーザーはGUIからディスプレイごとの表示モードを確認し、\
-任意のモードへ切替できる。
+1. The app starts automatically.
+2. Saved settings are loaded.
+3. Display settings are applied automatically.
 
-設定は保存され、macOS再起動後も
+# 2. Goals
 
-1.  アプリが自動起動\
-2.  保存された設定を読み込み\
-3.  ディスプレイ設定を自動適用
+xkdpi aims to:
 
-する。
+- Make macOS HiDPI mode management easy.
+- Restore resolution settings per display automatically.
+- Provide intuitive display-mode changes from the GUI.
+- Apply saved settings automatically after macOS restarts.
 
-------------------------------------------------------------------------
+# 3. Development Policy
 
-# 2. 目的
+## 3.1 Development Environment
 
-xkdpi の目的は以下。
+| Item | Value |
+| --- | --- |
+| Language | Swift |
+| Editor | VSCode |
+| Build | Swift Package Manager |
+| UI | AppKit |
+| Test | Swift Testing |
+| Method | TDD |
 
--   macOSディスプレイの **HiDPIモード管理を簡単にする**
--   **ディスプレイごとの解像度設定を自動復元**する
--   GUIから **直感的に表示モードを変更できる**
--   macOS再起動後も **自動的に設定を適用する**
+## 3.2 TDD Rules
 
-------------------------------------------------------------------------
+All features should be implemented with TDD.
 
-# 3. 開発方針
+Development cycle:
 
-## 3.1 開発環境
+1. Write a test.
+2. Confirm the test fails.
+3. Write the minimum implementation.
+4. Make the test pass.
+5. Refactor.
 
-  項目          内容
-  ------------- ----------------------------------------
-  言語          Swift
-  エディタ      VSCode
-  ビルド        Swift Package Manager
-  GUI           AppKit
-  Display API   CoreGraphics / Quartz Display Services
-  テスト        XCTest
-  開発手法      TDD
+Targets:
 
-------------------------------------------------------------------------
+- Display mode identification.
+- Display mode switching logic.
+- Settings persistence.
+- Display management.
 
-## 3.2 TDDルール
+# 4. Scope
 
-すべての機能は **TDD** により実装する。
+## 4.1 In Scope
 
-開発サイクル
+xkdpi provides:
 
-1.  テストを書く\
-2.  テスト失敗を確認\
-3.  最小実装を書く\
-4.  テストを通す\
-5.  リファクタリング
+- Connected display detection.
+- Available display mode listing.
+- HiDPI mode identification.
+- Display mode switching.
+- GUI operation.
+- Settings persistence.
+- Automatic startup.
+- Settings restoration at launch.
 
-対象
+## 4.2 Out of Scope
 
--   表示モード識別
--   表示モード切替ロジック
--   設定保存
--   ディスプレイ管理
+The initial version does not include:
 
-------------------------------------------------------------------------
+- EDID operations.
+- Virtual display generation.
+- New HiDPI mode generation.
+- HDR control.
+- Brightness control.
+- Color profile management.
+- Mirroring control.
+- Advanced display settings.
 
-# 4. スコープ
+# 5. Use Cases
 
-## 4.1 実装対象
+## 5.1 Confirm Display Modes
 
-xkdpi が提供する機能。
+When users open the GUI, they can confirm:
 
--   接続ディスプレイ検出
--   表示モード一覧取得
--   HiDPIモード識別
--   表示モード切替
--   GUI操作
--   設定保存
--   自動起動
--   起動時設定復元
+- Connected displays.
+- Current display mode.
+- Available display modes.
 
-------------------------------------------------------------------------
+## 5.2 Change Display Mode
 
-## 4.2 実装対象外
+User flow:
 
-初期バージョンでは以下は対象外。
+1. Select a display.
+2. View available display modes.
+3. Click a mode.
+4. Switch the display mode.
 
--   EDID操作
--   仮想ディスプレイ生成
--   新規HiDPIモード生成
--   HDR制御
--   輝度制御
--   カラープロファイル管理
--   ミラーリング制御
--   高度なディスプレイ設定
+## 5.3 Save Settings
 
-------------------------------------------------------------------------
+The mode selected by the user is saved.
 
-# 5. ユースケース
+## 5.4 Restore at Launch
 
-## 5.1 表示モード確認
+After macOS restarts:
 
-ユーザーはGUIを開くと
+1. xkdpi starts automatically.
+2. Saved settings are loaded.
+3. Display settings are applied.
 
--   接続ディスプレイ一覧
--   現在の表示モード
--   利用可能な表示モード
+# 6. UI Specification
 
-を確認できる。
+## 6.1 UI Type
 
-------------------------------------------------------------------------
+xkdpi is a standard GUI application.
 
-## 5.2 表示モード変更
+Characteristics:
 
-ユーザー操作
+- Dock visibility.
+- Resident process.
+- GUI operation.
 
-1.  ディスプレイを選択
-2.  表示モード一覧表示
-3.  モードをクリック
-4.  表示モード切替
+## 6.2 Screen Structure
 
-------------------------------------------------------------------------
+The main window shows one column per display.
 
-## 5.3 設定保存
+Each display column includes:
 
-ユーザーが選択したモードは保存される。
+- Display name.
+- Built-in or external display badge.
+- Current mode.
+- HiDPI-only filter.
+- Refresh-rate filters.
+- Recommended mode.
+- Other available modes.
 
-------------------------------------------------------------------------
+Mode rows show the resolution and available refresh-rate badges.
 
-## 5.4 起動時復元
+# 7. Automatic Startup
 
-macOS再起動後
+xkdpi can start automatically at macOS login.
 
-1.  xkdpi が自動起動
-2.  保存された設定読み込み
-3.  ディスプレイ設定を適用
+Implementation:
 
-------------------------------------------------------------------------
+- Use ServiceManagement through the app's status bar menu.
+- Keep `scripts/setup_launch_agent.sh` only as a compatibility helper.
 
-# 6. UI仕様
+Startup process:
 
-## 6.1 UIタイプ
+1. Load settings.
+2. Fetch display state.
+3. Apply saved modes.
 
-xkdpi は **通常のGUIアプリケーション**。
+# 8. Architecture
 
-特徴
+The project is layered as follows:
 
--   Dock表示
--   常駐型
--   GUI操作
+- `Domain`: Core models such as `Display` and `DisplayMode`.
+- `Application`: Services and orchestration such as `DisplayManager`,
+  `ModeSwitchService`, and `ConfigurationService`.
+- `Infrastructure`: CoreGraphics adapters, persistence, logging, and repository
+  protocols.
+- `GUI`: AppKit windows, views, and status bar controllers.
+- `App`: Executable entry point and dependency graph construction.
 
-------------------------------------------------------------------------
+Dependencies should point inward. Domain types must not depend on AppKit or
+CoreGraphics side effects. Infrastructure owns platform API calls.
 
-## 6.2 画面構成
-
-    xkdpi Main Window
-
-    Displays
-
-    Built-in Display
-    Current: 2560×1440 (HiDPI)
-
-    Available Modes
-     ○ 1920×1080
-     ● 2560×1440 (HiDPI)
-     ○ 3008×1692 (HiDPI)
-     ○ 3840×2160
-
-    External Display
-    Current: 2560×1440 (HiDPI)
-
-    Available Modes
-     ○ 1920×1080
-     ○ 2560×1440 (HiDPI)
-     ○ 3840×2160
-
-------------------------------------------------------------------------
-
-# 7. 自動起動仕様
-
-macOSログイン時に xkdpi を自動起動する。
-
-実装
-
-LaunchAgent
-
-配置
-
-\~/Library/LaunchAgents
-
-例
-
-com.xkdpi.displaycontroller.plist
-
-起動時処理
-
-1.  設定読み込み\
-2.  ディスプレイ状態取得\
-3.  保存されたモード適用
-
-------------------------------------------------------------------------
-
-# 8. アーキテクチャ
-
-    App Layer
-     ├ GUI
-     ├ App Controller
-
-    Application Layer
-     ├ Display Manager
-     ├ Mode Switch Service
-     ├ Configuration Service
-
-    Domain Layer
-     ├ Display
-     ├ DisplayMode
-
-    Infrastructure Layer
-     ├ CoreGraphics Adapter
-     ├ Settings Storage
-     ├ Logger
-
-------------------------------------------------------------------------
-
-# 9. データモデル
+# 9. Data Model
 
 ## Display
 
-    Display
-    - id
-    - name
-    - builtin
-    - currentMode
-
-------------------------------------------------------------------------
+- `id`: CoreGraphics display ID.
+- `name`: Display name.
+- `builtin`: Whether the display is built in.
+- `currentMode`: Current display mode.
+- `availableModes`: Available display modes.
+- `physicalWidthMM`: Physical width in millimeters.
+- `physicalHeightMM`: Physical height in millimeters.
 
 ## DisplayMode
 
-    DisplayMode
-    - id
-    - width
-    - height
-    - pixelWidth
-    - pixelHeight
-    - refreshRate
-    - isHiDPI
+- `id`: CoreGraphics mode ID.
+- `width`: Logical width.
+- `height`: Logical height.
+- `pixelWidth`: Pixel width.
+- `pixelHeight`: Pixel height.
+- `refreshRate`: Refresh rate.
+- `isHiDPI`: Whether the mode is HiDPI.
 
-------------------------------------------------------------------------
+## DisplaySetting
 
-# 10. 設定保存
+- `displayID`: Display ID.
+- `modeID`: Mode ID.
+- `timestamp`: Save timestamp.
 
-保存対象
+# 10. Settings Persistence
 
-display_id\
-mode_id\
-timestamp
+Saved values:
 
-保存先
+- Display ID.
+- Mode ID.
+- Timestamp.
 
-UserDefaults
+Storage:
 
-------------------------------------------------------------------------
+- UserDefaults key: `xkdpi.settings`.
+- Value format: JSON-encoded `[DisplaySetting]`.
 
-# 11. ログ
+# 11. Logging
 
-ログ対象
+Log targets:
 
--   起動
--   ディスプレイ検出
--   モード取得
--   モード切替
--   エラー
+- Startup.
+- Display detection.
+- Mode fetches.
+- Mode switching.
+- Errors.
 
-------------------------------------------------------------------------
+# 12. Test Strategy
 
-# 12. テスト戦略
+## Unit Tests
 
-## 単体テスト
+Targets:
 
-対象
+- HiDPI detection.
+- Display mode formatting.
+- Settings persistence.
+- Settings restoration.
+- Recommendation logic.
 
--   HiDPI判定
--   表示モード整形
--   設定保存
--   設定復元
+## Integration-Oriented Tests
 
-------------------------------------------------------------------------
+Targets:
 
-## 結合テスト
+- Display API boundaries.
+- Display mode switching orchestration.
+- Display detection orchestration.
 
-対象
+## Mocks
 
--   Display API呼び出し
--   表示モード切替
--   ディスプレイ検出
+Tests should isolate platform APIs with mocks such as `MockDisplayRepository`.
 
-------------------------------------------------------------------------
+# 13. Directory Structure
 
-## モック
+```text
+Sources/
+  App/
+    main.swift
+    AppDelegate.swift
+  xkdpi/
+    Domain/
+    Application/
+    Infrastructure/
+    GUI/
+Tests/
+  DisplayTests/
+docs/
+  spec/
+scripts/
+```
 
-DisplayRepository
+# 14. Build
 
-実装
+Run:
 
-MacDisplayRepository\
-MockDisplayRepository
-
-------------------------------------------------------------------------
-
-# 13. ディレクトリ構成
-
-    xkdpi
-    │
-    ├ Package.swift
-    │
-    ├ Sources
-    │   ├ App
-    │   │   main.swift
-    │   │
-    │   ├ GUI
-    │   │   MainWindow.swift
-    │   │
-    │   ├ Display
-    │   │   DisplayManager.swift
-    │   │
-    │   ├ Mode
-    │   │   ModeSwitchService.swift
-    │   │
-    │   ├ Config
-    │   │   SettingsStore.swift
-    │   │
-    │   └ Infrastructure
-    │       CoreGraphicsAdapter.swift
-    │
-    ├ Tests
-    │   DisplayTests
-    │
-    └ scripts
-        build_dmg.sh
-
-------------------------------------------------------------------------
-
-# 14. ビルド
-
+```bash
 swift build
-
-実行
-
 swift run
+swift test
+```
 
-------------------------------------------------------------------------
+# 15. Distribution
 
-# 15. 配布
+Distribution format:
 
-配布形式
+- Source-based installation.
+- Locally built `.app`.
+- Optional `.dmg` generated by `scripts/build_dmg.sh`.
 
-.dmg
+Create:
 
-作成
+```bash
+./scripts/install.sh
+```
 
-hdiutil create xkdpi.dmg -srcfolder xkdpi.app
+# 16. Development Phases
 
-------------------------------------------------------------------------
+Phase 1:
 
-# 16. 開発フェーズ
+- GUI creation.
+- Display fetch.
+- Mode fetch.
+- HiDPI identification.
 
-## Phase 1
+Phase 2:
 
--   GUI作成
--   ディスプレイ取得
--   モード取得
--   HiDPI識別
+- Mode switching.
+- Settings persistence.
 
-------------------------------------------------------------------------
+Phase 3:
 
-## Phase 2
+- Automatic startup.
+- Settings restoration.
+- DMG generation.
 
--   モード切替
--   設定保存
+# 17. Acceptance Criteria
 
-------------------------------------------------------------------------
+xkdpi must satisfy:
 
-## Phase 3
+- Display list shown in the GUI.
+- Display mode list retrieval.
+- HiDPI mode identification.
+- Display mode switching.
+- Settings persistence.
+- Automatic restoration after restart.
+- Logging.
+- DMG generation.
 
--   自動起動
--   設定復元
--   .dmg配布
+# 18. Conclusion
 
-------------------------------------------------------------------------
-
-# 17. 受け入れ条件
-
-xkdpi は以下を満たすこと。
-
--   GUIでディスプレイ一覧表示
--   表示モード一覧取得
--   HiDPIモード識別
--   表示モード切替
--   設定保存
--   再起動後自動復元
--   ログ出力
--   .dmg配布
-
-------------------------------------------------------------------------
-
-# 18. 結論
-
-**xkdpi** は
-
-macOSディスプレイのHiDPI表示モードを管理する\
-**常駐型GUIアプリケーション**として開発する。
-
-特徴
-
--   Swift
--   VSCode
--   TDD
--   GUIアプリ
--   自動起動
--   .dmg配布
-
-により、軽量で実用的なディスプレイ管理ツールを提供する。
+**xkdpi** is developed as a lightweight, practical, resident GUI application for
+managing macOS HiDPI display modes.

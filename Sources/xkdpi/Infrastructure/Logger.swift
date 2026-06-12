@@ -1,13 +1,13 @@
 import Foundation
 
-/// ログレベル
+/// Log level.
 public enum LogLevel: String, Sendable {
     case debug = "DEBUG"
     case info  = "INFO"
     case error = "ERROR"
 }
 
-/// 標準出力へのシンプルなロガー
+/// Simple logger that writes to standard output.
 public struct Logger: Sendable {
 
     private let label: String

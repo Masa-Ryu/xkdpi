@@ -22,11 +22,11 @@ if ! command -v hdiutil >/dev/null 2>&1; then
 fi
 
 if pgrep -x "${PRODUCT}" >/dev/null 2>&1; then
-    echo "error: ${PRODUCT} が起動中です。ステータスバーのメニューから終了してから再実行してください。" >&2
+    echo "error: ${PRODUCT} is running. Quit it from the status bar menu, then run this installer again." >&2
     exit 1
 fi
 
-echo "=== ${PRODUCT} をビルドします ==="
+echo "=== Building ${PRODUCT} ==="
 "${SCRIPT_DIR}/build_dmg.sh"
 
 if [[ ! -d "${APP_BUNDLE}" ]]; then
@@ -35,12 +35,12 @@ if [[ ! -d "${APP_BUNDLE}" ]]; then
 fi
 
 if [[ -e "${DEST_APP}" ]]; then
-    read -r -p "${DEST_APP} は既に存在します。上書きしますか？ [y/N] " answer
+    read -r -p "${DEST_APP} already exists. Overwrite it? [y/N] " answer
     case "${answer}" in
         y|Y|yes|YES)
             ;;
         *)
-            echo "インストールを中止しました。"
+            echo "Installation canceled."
             exit 0
             ;;
     esac
@@ -51,13 +51,13 @@ copy_app() {
     cp -R "${APP_BUNDLE}" "${DEST_APP}"
 }
 
-echo "=== ${DEST_APP} へコピーします ==="
+echo "=== Copying to ${DEST_APP} ==="
 if ! copy_app; then
-    echo "通常権限でコピーできませんでした。sudoで再試行します。"
+    echo "Could not copy with normal permissions. Retrying with sudo."
     sudo rm -rf "${DEST_APP}"
     sudo cp -R "${APP_BUNDLE}" "${DEST_APP}"
 fi
 
-echo "=== インストール完了 ==="
-echo "アプリ: ${DEST_APP}"
-echo "ログイン時自動起動は、アプリのステータスバーメニューから設定してください。"
+echo "=== Installation complete ==="
+echo "App: ${DEST_APP}"
+echo "Configure launch at login from the app's status bar menu."

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "warning: このスクリプトは互換用です。通常はアプリのステータスバーメニューからログイン時自動起動を設定してください。" >&2
+echo "warning: This script is kept for compatibility. Normally, configure launch at login from the app's status bar menu." >&2
 
 BUNDLE_ID="com.xkdpi.displaycontroller"
 PLIST_NAME="${BUNDLE_ID}.plist"
@@ -44,4 +44,4 @@ PLIST
 
 launchctl bootstrap "gui/${USER_ID}" "${PLIST_PATH}" >/dev/null 2>&1 \
     || launchctl load "${PLIST_PATH}"
-echo "LaunchAgent 登録完了: ${PLIST_PATH}"
+echo "LaunchAgent registered: ${PLIST_PATH}"

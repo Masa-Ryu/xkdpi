@@ -1,7 +1,7 @@
 import AppKit
 
-/// xkdpi メインウィンドウ
-/// ディスプレイ一覧とモード選択UIを表示し、モード切替・設定保存を行う
+/// Main xkdpi window.
+/// Displays connected displays and mode selection UI, then switches and saves modes.
 public final class MainWindowController: NSWindowController {
 
     // MARK: - Dependencies
@@ -13,9 +13,9 @@ public final class MainWindowController: NSWindowController {
 
     // MARK: - UI Components
 
-    /// ディスプレイ列を横並びに格納するコンテナ（各列は独立スクロール）
+    /// Container that lays out display columns horizontally. Each column scrolls independently.
     private let columnRow = NSStackView()
-    /// モード切替後の in-place 更新用（displayID → セクションビュー）
+    /// Section views used for in-place updates after mode switches, keyed by display ID.
     private var sectionViews: [CGDirectDisplayID: DisplaySectionView] = [:]
 
     // MARK: - Init
@@ -45,20 +45,20 @@ public final class MainWindowController: NSWindowController {
         setupContentView()
     }
 
-    required init?(coder: NSCoder) { fatalError("XIB 非対応") }
+    required init?(coder: NSCoder) { fatalError("XIB is not supported") }
 
     // MARK: - Setup
 
     private func setupContentView() {
         guard let contentView = window?.contentView else { return }
 
-        // ヘッダーラベル（固定）
-        let header = NSTextField(labelWithString: "ディスプレイ設定")
+        // Fixed header label.
+        let header = NSTextField(labelWithString: "Display Settings")
         header.font = .boldSystemFont(ofSize: 16)
         header.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(header)
 
-        // カラム行（各列に独立スクロールビューを持つ）
+        // Column row. Each column owns an independent scroll view.
         columnRow.orientation = .horizontal
         columnRow.alignment = .top
         columnRow.spacing = Self.columnSpacing
@@ -79,14 +79,14 @@ public final class MainWindowController: NSWindowController {
 
     // MARK: - Public API
 
-    /// ディスプレイ一覧を取得してUIを再描画する
+    /// Fetches displays and redraws the UI.
     public func refreshDisplays() {
         do {
             let displays = try displayManager.fetchDisplays()
             updateUI(with: displays)
         } catch {
-            logger.error("ディスプレイ取得失敗: \(error)")
-            showErrorLabel("ディスプレイ情報を取得できませんでした")
+            logger.error("Failed to fetch displays: \(error)")
+            showErrorLabel("Could not fetch display information")
         }
     }
 
@@ -97,7 +97,7 @@ public final class MainWindowController: NSWindowController {
     private static let windowPadding: CGFloat = 48  // scroll bar + side margins
 
     private func updateUI(with displays: [Display]) {
-        // ウィンドウ幅をディスプレイ数に合わせて調整（先に実行）
+        // Adjust the window width to the number of displays before rebuilding content.
         if !displays.isEmpty, let window = window {
             let count = CGFloat(displays.count)
             let targetWidth = Self.columnWidth * count
@@ -114,7 +114,7 @@ public final class MainWindowController: NSWindowController {
         sectionViews.removeAll()
 
         if displays.isEmpty {
-            showErrorLabel("ディスプレイが検出されませんでした")
+            showErrorLabel("No displays were detected")
             return
         }
 
@@ -141,7 +141,7 @@ public final class MainWindowController: NSWindowController {
             colScroll.widthAnchor.constraint(equalToConstant: Self.columnWidth).isActive = true
             columnRow.addArrangedSubview(colScroll)
 
-            // columnRow の高さ全体を埋めるよう bottom 制約を追加
+            // Add a bottom constraint so the scroll view fills the full columnRow height.
             colScroll.bottomAnchor.constraint(equalTo: columnRow.bottomAnchor).isActive = true
         }
     }
@@ -150,11 +150,11 @@ public final class MainWindowController: NSWindowController {
         do {
             try modeSwitchService.switchMode(mode, for: display)
             configurationService.saveSettings(display: display, mode: mode)
-            // UI 全再構築を避けフィルター状態を保持したままラベルと選択状態だけ更新
+            // Avoid rebuilding the whole UI so filters are preserved while labels and selection update.
             sectionViews[display.id]?.updateCurrentMode(to: mode)
         } catch {
-            logger.error("モード切替失敗: \(error)")
-            showAlert(title: "モード切替に失敗しました", message: error.localizedDescription)
+            logger.error("Failed to switch mode: \(error)")
+            showAlert(title: "Failed to switch mode", message: error.localizedDescription)
         }
     }
 
