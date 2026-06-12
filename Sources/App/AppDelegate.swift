@@ -3,9 +3,11 @@ import xkdpi
 
 /// アプリケーションデリゲート
 /// 依存グラフの構築・ウィンドウ表示・起動時設定復元を行う
+@MainActor
 public final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var windowController: MainWindowController?
+    private var statusBarController: StatusBarController?
     private let logger = Logger(label: "AppDelegate")
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
@@ -24,7 +26,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             logger: logger
         )
 
-        // ウィンドウを生成・表示
+        let loginItems = LoginItemService()
+
+        // ウィンドウを生成（表示はステータスバーの操作時）
         let wc = MainWindowController(
             displayManager: manager,
             modeSwitchService: switcher,
@@ -32,8 +36,17 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             logger: logger
         )
         windowController = wc
-        wc.showWindow(nil)
-        wc.refreshDisplays()
+
+        statusBarController = StatusBarController(
+            loginItemManager: loginItems,
+            logger: Logger(label: "StatusBarController"),
+            openSettings: { [weak self] in
+                self?.showSettingsWindow()
+            },
+            showError: { [weak self] title, message in
+                self?.showAlert(title: title, message: message)
+            }
+        )
 
         // 起動時に保存された設定を復元
         do {
@@ -46,5 +59,25 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 常駐型アプリ: ウィンドウを閉じてもプロセスを継続する
     public func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
+    }
+
+    private func showSettingsWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        windowController?.showWindow(nil)
+        windowController?.window?.makeKeyAndOrderFront(nil)
+        windowController?.refreshDisplays()
+    }
+
+    private func showAlert(title: String, message: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.alertStyle = .warning
+
+        if let window = windowController?.window, window.isVisible {
+            alert.beginSheetModal(for: window)
+        } else {
+            alert.runModal()
+        }
     }
 }
