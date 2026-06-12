@@ -20,7 +20,7 @@ public final class StatusBarController: NSObject {
         openSettings: @escaping () -> Void,
         showError: @escaping (String, String) -> Void
     ) {
-        self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         self.loginItemManager = loginItemManager
         self.logger = logger
         self.openSettings = openSettings
@@ -61,7 +61,12 @@ public final class StatusBarController: NSObject {
     }
 
     private func setupStatusItem() {
-        statusItem.button?.title = "xkdpi"
+        if let image = Self.makeStatusBarIcon() {
+            statusItem.button?.image = image
+            statusItem.button?.imagePosition = .imageOnly
+        } else {
+            statusItem.button?.title = "xk"
+        }
         statusItem.button?.toolTip = "xkdpi"
 
         openSettingsItem.target = self
@@ -80,5 +85,18 @@ public final class StatusBarController: NSObject {
         menu.addItem(.separator())
         menu.addItem(quitItem)
         statusItem.menu = menu
+    }
+
+    private static func makeStatusBarIcon() -> NSImage? {
+        guard
+            let iconURL = Bundle.module.url(forResource: "StatusBarIcon", withExtension: "svg"),
+            let image = NSImage(contentsOf: iconURL)
+        else {
+            return nil
+        }
+
+        image.isTemplate = true
+        image.size = NSSize(width: 20, height: 14)
+        return image
     }
 }
