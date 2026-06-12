@@ -6,7 +6,7 @@ BUILD_DIR=".build/release"
 APP_BUNDLE="${PRODUCT}.app"
 DMG_NAME="${PRODUCT}.dmg"
 BUNDLE_ID="com.xkdpi.displaycontroller"
-VERSION="1.0.0"
+VERSION="26.06.12"
 
 echo "=== Release build ==="
 swift build -c release
