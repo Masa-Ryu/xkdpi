@@ -1,7 +1,7 @@
 import AppKit
 
 /// xkdpi メインウィンドウ
-/// ディスプレイ一覧とモード選択UIを表示し、モード切替・設定保存を行う
+/// NSSplitView による左右2ペイン構成: 左=ディスプレイ一覧、右=詳細ペイン
 public final class MainWindowController: NSWindowController {
 
     // MARK: - Dependencies
@@ -13,10 +13,16 @@ public final class MainWindowController: NSWindowController {
 
     // MARK: - UI Components
 
-    /// ディスプレイ列を横並びに格納するコンテナ（各列は独立スクロール）
-    private let columnRow = NSStackView()
-    /// モード切替後の in-place 更新用（displayID → セクションビュー）
-    private var sectionViews: [CGDirectDisplayID: DisplaySectionView] = [:]
+    private let splitView = NSSplitView()
+    private let sidebarView = SidebarView(frame: .zero)
+    private let detailContainer = NSView()
+
+    // MARK: - State
+
+    private var displays: [Display] = []
+    private var selectedDisplayID: CGDirectDisplayID?
+    /// フィルター状態保持: ディスプレイ切替時に DetailPaneView を再利用する
+    private var detailPaneCache: [CGDirectDisplayID: DetailPaneView] = [:]
 
     // MARK: - Init
 
@@ -32,12 +38,16 @@ public final class MainWindowController: NSWindowController {
         self.logger = logger
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 420, height: 600),
+            contentRect: NSRect(x: 0, y: 0,
+                                width: DesignTokens.Layout.windowWidth,
+                                height: DesignTokens.Layout.windowHeight),
             styleMask: [.titled, .closable, .resizable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
         window.title = "xkdpi"
+        window.minSize = NSSize(width: DesignTokens.Layout.windowMinWidth,
+                                height: DesignTokens.Layout.windowMinHeight)
         window.center()
         window.setFrameAutosaveName("xkdpi.MainWindow")
 
@@ -52,28 +62,31 @@ public final class MainWindowController: NSWindowController {
     private func setupContentView() {
         guard let contentView = window?.contentView else { return }
 
-        // ヘッダーラベル（固定）
-        let header = NSTextField(labelWithString: "ディスプレイ設定")
-        header.font = .boldSystemFont(ofSize: 16)
-        header.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(header)
+        // NSSplitView（左右分割）
+        splitView.isVertical = true
+        splitView.dividerStyle = .thin
+        splitView.delegate = self
+        splitView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(splitView)
 
-        // カラム行（各列に独立スクロールビューを持つ）
-        columnRow.orientation = .horizontal
-        columnRow.alignment = .top
-        columnRow.spacing = Self.columnSpacing
-        columnRow.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(columnRow)
+        // 左: SidebarView
+        sidebarView.translatesAutoresizingMaskIntoConstraints = false
+        splitView.addArrangedSubview(sidebarView)
+        sidebarView.onDisplaySelected = { [weak self] display in
+            self?.showDetail(for: display)
+        }
+
+        // 右: Detail Container
+        detailContainer.translatesAutoresizingMaskIntoConstraints = false
+        splitView.addArrangedSubview(detailContainer)
 
         NSLayoutConstraint.activate([
-            header.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
-            header.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            header.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            splitView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            splitView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            splitView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            splitView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
 
-            columnRow.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 8),
-            columnRow.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            columnRow.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            columnRow.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
+            sidebarView.widthAnchor.constraint(equalToConstant: DesignTokens.Layout.sidebarWidth),
         ])
     }
 
@@ -82,87 +95,101 @@ public final class MainWindowController: NSWindowController {
     /// ディスプレイ一覧を取得してUIを再描画する
     public func refreshDisplays() {
         do {
-            let displays = try displayManager.fetchDisplays()
-            updateUI(with: displays)
+            let fetchedDisplays = try displayManager.fetchDisplays()
+            displays = fetchedDisplays
+            detailPaneCache.removeAll()
+            sidebarView.displays = fetchedDisplays
+
+            if let first = fetchedDisplays.first {
+                sidebarView.selectedDisplayID = first.id
+                showDetail(for: first)
+            } else {
+                showEmptyState()
+            }
         } catch {
             logger.error("ディスプレイ取得失敗: \(error)")
             showErrorLabel("ディスプレイ情報を取得できませんでした")
         }
     }
 
-    // MARK: - Private UI Update
+    // MARK: - Detail Management
 
-    private static let columnWidth: CGFloat = 360
-    private static let columnSpacing: CGFloat = 16
-    private static let windowPadding: CGFloat = 48  // scroll bar + side margins
+    private func showDetail(for display: Display) {
+        selectedDisplayID = display.id
 
-    private func updateUI(with displays: [Display]) {
-        // ウィンドウ幅をディスプレイ数に合わせて調整（先に実行）
-        if !displays.isEmpty, let window = window {
-            let count = CGFloat(displays.count)
-            let targetWidth = Self.columnWidth * count
-                            + Self.columnSpacing * (count - 1)
-                            + Self.windowPadding
-            var frame = window.frame
-            let delta = max(420, targetWidth) - frame.size.width
-            frame.size.width = max(420, targetWidth)
-            frame.origin.x -= (delta / 2)
-            window.setFrame(frame, display: true, animate: false)
-        }
-
-        columnRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        sectionViews.removeAll()
-
-        if displays.isEmpty {
-            showErrorLabel("ディスプレイが検出されませんでした")
-            return
-        }
-
-        for display in displays {
-            let sectionView = DisplaySectionView(display: display) { [weak self] selectedMode in
-                self?.handleModeSelection(selectedMode, for: display)
+        // キャッシュから取得 or 新規生成
+        let pane: DetailPaneView
+        if let cached = detailPaneCache[display.id] {
+            pane = cached
+        } else {
+            pane = DetailPaneView(display: display)
+            pane.onModeSelected = { [weak self] mode in
+                self?.handleModeSelection(mode, for: display)
             }
-            sectionView.translatesAutoresizingMaskIntoConstraints = false
-            sectionViews[display.id] = sectionView
-            let colScroll = NSScrollView()
-            colScroll.hasVerticalScroller = true
-            colScroll.autohidesScrollers = true
-            colScroll.drawsBackground = false
-            colScroll.translatesAutoresizingMaskIntoConstraints = false
-            colScroll.documentView = sectionView
-
-            let clipView = colScroll.contentView
-            NSLayoutConstraint.activate([
-                sectionView.topAnchor.constraint(equalTo: clipView.topAnchor),
-                sectionView.leadingAnchor.constraint(equalTo: clipView.leadingAnchor),
-                sectionView.trailingAnchor.constraint(equalTo: clipView.trailingAnchor),
-            ])
-
-            colScroll.widthAnchor.constraint(equalToConstant: Self.columnWidth).isActive = true
-            columnRow.addArrangedSubview(colScroll)
-
-            // columnRow の高さ全体を埋めるよう bottom 制約を追加
-            colScroll.bottomAnchor.constraint(equalTo: columnRow.bottomAnchor).isActive = true
+            detailPaneCache[display.id] = pane
         }
+
+        // コンテナの子を差し替え
+        detailContainer.subviews.forEach { $0.removeFromSuperview() }
+        pane.translatesAutoresizingMaskIntoConstraints = false
+        detailContainer.addSubview(pane)
+        NSLayoutConstraint.activate([
+            pane.topAnchor.constraint(equalTo: detailContainer.topAnchor),
+            pane.leadingAnchor.constraint(equalTo: detailContainer.leadingAnchor),
+            pane.trailingAnchor.constraint(equalTo: detailContainer.trailingAnchor),
+            pane.bottomAnchor.constraint(equalTo: detailContainer.bottomAnchor),
+        ])
     }
+
+    // MARK: - Mode Selection
 
     private func handleModeSelection(_ mode: DisplayMode, for display: Display) {
         do {
             try modeSwitchService.switchMode(mode, for: display)
             configurationService.saveSettings(display: display, mode: mode)
-            // UI 全再構築を避けフィルター状態を保持したままラベルと選択状態だけ更新
-            sectionViews[display.id]?.updateCurrentMode(to: mode)
+
+            // display の currentMode を更新
+            if let index = displays.firstIndex(where: { $0.id == display.id }) {
+                displays[index].currentMode = mode
+                // Hero + 選択状態を更新
+                detailPaneCache[display.id]?.updateCurrentMode(to: mode)
+                // サイドバー行を更新
+                sidebarView.updateRow(for: display.id, display: displays[index])
+            }
         } catch {
             logger.error("モード切替失敗: \(error)")
             showAlert(title: "モード切替に失敗しました", message: error.localizedDescription)
         }
     }
 
+    // MARK: - Empty / Error States
+
+    private func showEmptyState() {
+        detailContainer.subviews.forEach { $0.removeFromSuperview() }
+        let label = NSTextField(labelWithString: "ディスプレイが検出されませんでした")
+        label.textColor = .secondaryLabelColor
+        label.font = DesignTokens.Typography.body
+        label.alignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        detailContainer.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: detailContainer.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: detailContainer.centerYAnchor),
+        ])
+    }
+
     private func showErrorLabel(_ message: String) {
-        columnRow.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        detailContainer.subviews.forEach { $0.removeFromSuperview() }
         let label = NSTextField(labelWithString: message)
         label.textColor = .secondaryLabelColor
-        columnRow.addArrangedSubview(label)
+        label.font = DesignTokens.Typography.body
+        label.alignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        detailContainer.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: detailContainer.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: detailContainer.centerYAnchor),
+        ])
     }
 
     private func showAlert(title: String, message: String) {
@@ -172,5 +199,32 @@ public final class MainWindowController: NSWindowController {
         alert.informativeText = message
         alert.alertStyle = .warning
         alert.beginSheetModal(for: window)
+    }
+}
+
+// MARK: - NSSplitViewDelegate
+
+extension MainWindowController: NSSplitViewDelegate {
+    public func splitView(
+        _ splitView: NSSplitView,
+        constrainMinCoordinate proposedMinimumPosition: CGFloat,
+        ofSubviewAt dividerIndex: Int
+    ) -> CGFloat {
+        DesignTokens.Layout.sidebarMinWidth
+    }
+
+    public func splitView(
+        _ splitView: NSSplitView,
+        constrainMaxCoordinate proposedMaximumPosition: CGFloat,
+        ofSubviewAt dividerIndex: Int
+    ) -> CGFloat {
+        DesignTokens.Layout.sidebarMaxWidth
+    }
+
+    public func splitView(
+        _ splitView: NSSplitView,
+        canCollapseSubview subview: NSView
+    ) -> Bool {
+        false
     }
 }
