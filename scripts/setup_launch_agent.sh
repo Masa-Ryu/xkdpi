@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "warning: このスクリプトは互換用です。通常はアプリのステータスバーメニューからログイン時自動起動を設定してください。" >&2
+
 BUNDLE_ID="com.xkdpi.displaycontroller"
 PLIST_NAME="${BUNDLE_ID}.plist"
 AGENTS_DIR="${HOME}/Library/LaunchAgents"

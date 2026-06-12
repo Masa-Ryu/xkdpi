@@ -13,7 +13,10 @@ let package = Package(
     targets: [
         .target(
             name: "xkdpi",
-            path: "Sources/xkdpi"
+            path: "Sources/xkdpi",
+            resources: [
+                .process("Resources")
+            ]
         ),
         .executableTarget(
             name: "App",

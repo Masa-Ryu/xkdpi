@@ -53,9 +53,6 @@ if ! copy_app; then
     sudo cp -R "${APP_BUNDLE}" "${DEST_APP}"
 fi
 
-echo "=== ログイン時自動起動を設定します ==="
-"${SCRIPT_DIR}/setup_launch_agent.sh"
-
 echo "=== インストール完了 ==="
 echo "アプリ: ${DEST_APP}"
-echo "LaunchAgent: ${HOME}/Library/LaunchAgents/${BUNDLE_ID}.plist"
+echo "ログイン時自動起動は、アプリのステータスバーメニューから設定してください。"
